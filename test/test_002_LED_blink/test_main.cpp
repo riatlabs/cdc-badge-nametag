@@ -27,7 +27,7 @@ void setup() {
     setup_usb_serial();
     UNITY_BEGIN();
     #ifndef TEST_LED_PIN
-        Serial.println("SKIPPED: TEST_LED_PIN not defined.");
+	TEST_IGNORE_MESSAGE("SKIPPED: TEST_LED_PIN not defined");
     #else
         RUN_TEST(test_pin_mode_output);
 
