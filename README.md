@@ -1,40 +1,59 @@
-# CDC Badge QC Firmware
-Quality Control firmware for the CDC electronic badge.
-Sets sane defaults and tests chips and peripherals.
+# Badge Firmware
 
-## ESP32-S3
-- [  ] Use GPIO matrix/IO MUX to configure pins to the desired function
-  (check schematics).
+Minimalistic firmware for CDC badge with e-paper, display, keyboard and TROPIC01 secure element.
 
-## Charging IC
-[BQ25895](https://www.ti.com/product/BQ25895)
-- [  ] Disable ILIM pin on REG00[6]
-- [  ] Disable OTG on REG03[5]
-- [  ] Set minimum system voltage to 3.3V on REG03[1-3]
-- [  ] Set fast charge current limit to 512 mA on REG04[0-6]
-- [  ] Process interrupts coming from INT pin
-- [  ] Watch DSEL pin
-- [  ] Power off system by enabling shipping mode on REG09[5] upon a flash
-  button (ESP32 IO0 pin) press.
-- [  ] Read status and voltages from REG0B, REG0C, REG0E, REG0F, REG10, REG11,
-  REG12 and REG13.
+# how to update display?
 
-## IO Expander and Keypad
-- [  ] Process interrupts.
-- [  ] Check that all keypad buttons are working.
+go to `lib/cdc-badge/display.h` and change following macros:
+```
+#define DISPLAY_LINE_1 "Your name"
+#define DISPLAY_LINE_2 "your project"
+#define DISPLAY_LINE_3 "your web"
 
-## Secure Element
-- [  ] Establish secure channel and verify basic functionalities.
-- [  ] Put in sleep mode to reduce power usage.
+```
 
-## E-Paper Display
-- [  ] Draw something on the screen.
-- [  ] Exercise the 3 refresh methods: full, fast and partial.
+Rebuild and flash.
 
-## E-Paper Display Backlight
-- [  ] Use LED PWM and test different brightness levels.
 
-## License and authorship
-Copyright © 2025 RIAT Institute
+### Main Loop
+```cpp
+setup() → badge_init() → app_setup()
+   ↓
+loop() → app_loop() → read buttons → update display
+```
 
-Licensed under [MIT License](/LICENSE).
+## Hardware Components
+
+| Component          | Interface | Address/Pin | Purpose              |
+|--------------------|-----------|-------------|----------------------|
+| BQ25895            | I2C0      | 0x6A        | Battery charging     |
+| TCA9535 Expander   | I2C1      | 0x20        | Keyboard matrix      |
+| GxEPD2 Display     | SPI       | CS=41       | E-paper display      |
+| TROPIC01           | SPI       | CS=10       | Secure element       |
+| LED                | GPIO      | 0           | Status indicator     |
+
+### Pin Map
+```
+I2C0: SDA=17, SCL=18  (Charging)
+I2C1: SDA=47, SCL=48  (Expander)
+SPI:  SCLK=12, MISO=11, MOSI=13
+EPD:  CS=41, DC=45, RST=46, BUSY=42, LED=8
+TR01: CS=10
+BTN:  EXP_IRQ=1, FLASH=0
+```
+
+## Dependencies
+
+- [libtropic-arduino](https://github.com/tropicsquare/libtropic-arduino) - TROPIC01 SDK
+- [TCA9555](https://github.com/robtillaart/TCA9555) - I/O expander driver
+- [GxEPD2](https://github.com/ZinggJM/GxEPD2) - E-paper display driver
+- [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library) - Graphics library
+
+### App Initialization Flow
+1. **Serial Port** → Debug output (115200 baud)
+2. **I2C Buses** → Two buses (charging IC, pin expander)
+3. **Power Management** → BQ25895 battery charging IC
+4. **SPI Bus** → Display and secure element communication
+5. **Pin Expander** → TCA9535 for keyboard input
+6. **TROPIC01** → Secure element initialization + session
+7. **Display** → E-paper with white text on black background
