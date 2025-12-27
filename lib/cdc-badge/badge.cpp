@@ -38,6 +38,9 @@ void badge_init() {
     Serial.println("  OK");
   }
 
+  // Init display - put some initial screen there
+  display_init();
+
   // TROPIC01 is used as secure element
   if (!tropic01_init()) {
     Serial.println("ERROR: TROPIC01 initialization failed!");
@@ -53,7 +56,4 @@ void badge_init() {
   } else {
     Serial.println("  OK");
   }
-
-  display_init();
-  //display_show();
 }
