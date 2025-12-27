@@ -47,7 +47,10 @@ void display_init() {
     display.setFont(&FreeSansBold9pt7b);
     display.setTextColor(GxEPD_WHITE);
 
-    display.setFullWindow();
+    // Use partial window for smooth, flicker-free updates (ideal for menus)
+    // This avoids the heavy blinking of full refresh mode
+    display.setPartialWindow(0, 0, display.width(), display.height());
+    
     display.firstPage();
     
     do {
