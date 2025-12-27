@@ -5,6 +5,12 @@ Minimalistic firmware for CDC badge with e-paper, display, keyboard and TROPIC01
 
 # How to update display with my name?
 
+* Install Visual Studio Code IDE
+* Open it and install platform.io extension
+* Restart Visual Studio Code IDE
+* Clone this repo
+* On the left side of Visual Studio Code, there is platformio icon. Click on it, then open content of this repo there
+
 go to `lib/cdc-badge/display.h` and change following macros:
 ```
 #define DISPLAY_LINE_1 "Your name"
