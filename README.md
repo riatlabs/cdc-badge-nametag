@@ -1,7 +1,7 @@
 # CDC Badge Firmware
 
 This repository contins minimalistic firmware for CDC badge with e-paper display, keyboard and TROPIC01 secure element.
-Hw design of this badge is [here](github.com/riatlabs/cdc-badge).
+Hw design of this badge is [here](https://www.github.com/riatlabs/cdc-badge), check `releases` for direct access to pdf schematics.
 Read more about Critical Decentralisation Cluster [here](https://decentral.community/).
 
 ---
