@@ -14,6 +14,9 @@ void app_loop(app_state_t *state) {
     Serial.println(pressed);
   }
 
+  // Switch battery OFF if FLASH button is pressed
+  powerdown_process_irq();
+
   // Once we have some menu, we can update it here
   // update_menu();
 }

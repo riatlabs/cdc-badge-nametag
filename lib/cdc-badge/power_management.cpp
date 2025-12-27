@@ -2,6 +2,14 @@
 #include "i2c_bus.h"
 #include <Arduino.h>
 
+// Volatile flag to track power button interrupt
+static volatile bool powerButtonInterruptOccurred = false;
+
+// Interrupt handler for power button (GPIO0/FLASH_BTN_PIN)
+void IRAM_ATTR powerButtonInterruptHandler() {
+  powerButtonInterruptOccurred = true;
+}
+
 // Write a single register
 bool write_bq_reg(uint8_t reg_addr, uint8_t data) {
   I2C0_Bus.beginTransmission(BQ25895_ADDR);
@@ -78,14 +86,20 @@ bool power_management_init() {
     Serial.println("  REG03: OTG was already disabled.");
   }
 
-  // Serial.println("Power management initialized successfully");
+  // Configure power button interrupt
+  pinMode(FLASH_BTN_PIN, INPUT_PULLUP);
+  
+  // Attach interrupt: GPIO0, ISR function, FALLING edge (button press)
+  attachInterrupt(digitalPinToInterrupt(FLASH_BTN_PIN),
+                  powerButtonInterruptHandler,
+                  FALLING);
+  
+  Serial.println("  Power button interrupt configured on GPIO0");
+
   return true;
 }
 
 bool power_management_disconnect_battery() {
-  Serial.println("power_management_disconnect_battery()");
-  Serial.println("  WARNING: Ensure USB is connected before calling this!");
-
   // Disconnect battery by setting BATFET_DIS (REG09[5] = 1)
   // System will only run from USB power after this
   uint8_t current_val = read_bq_reg(0x09);
@@ -96,49 +110,16 @@ bool power_management_disconnect_battery() {
     return false;
   }
 
-  Serial.printf("  REG09: Battery disconnected. Old: 0x%02X -> New: 0x%02X\r\n",
-                current_val, new_val);
-  Serial.println("  System now powered by USB only");
-
   return true;
 }
 
-bool power_management_reconnect_battery() {
-  Serial.println("power_management_reconnect_battery()");
-
-  // Reconnect battery by clearing BATFET_DIS (REG09[5] = 0)
-  uint8_t current_val = read_bq_reg(0x09);
-  uint8_t new_val = current_val & ~(1 << 5);
-
-  if (!write_bq_reg(0x09, new_val)) {
-    Serial.println("  ERROR: Failed to clear BATFET_DIS");
-    return false;
+// Function to check and handle power button interrupt
+bool powerdown_process_irq() {
+  if (powerButtonInterruptOccurred) {
+    Serial.println("[POWERDOWN] Power button pressed - powerdown_process_irq() executed");
+    power_management_disconnect_battery();
+    powerButtonInterruptOccurred = false;
+    return true;
   }
-
-  Serial.printf("  REG09: Battery reconnected. Old: 0x%02X -> New: 0x%02X\r\n",
-                current_val, new_val);
-  Serial.println("  Battery is now connected");
-
-  return true;
-}
-
-bool power_management_shutdown() {
-  Serial.println("power_management_shutdown()");
-  Serial.println("  Initiating software shutdown via BATFET_DLY...");
-  
-  // Trigger QON-like shutdown by setting BATFET_DLY (REG09[3] = 1)
-  // This will delay and then turn off BATFET, emulating QON pin being pulled low
-  uint8_t current_val = read_bq_reg(0x09);
-  uint8_t new_val = current_val | (1 << 3);
-  
-  if (!write_bq_reg(0x09, new_val)) {
-    Serial.println("  ERROR: Failed to set BATFET_DLY");
-    return false;
-  }
-  
-  Serial.printf("  REG09: Shutdown initiated. Old: 0x%02X -> New: 0x%02X\r\n",
-                current_val, new_val);
-  Serial.println("  System will shutdown in 10 seconds...");
-  
-  return true;
+  return false;
 }

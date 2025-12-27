@@ -21,6 +21,11 @@ go to `lib/cdc-badge/display.h` and change following macros:
 
 Rebuild and flash.
 
+# How to switch badge ON/OFF?
+
+* To power badge OFF, press FLASH button
+* To power badge ON, press SW12 for a few (~3) seconds
+
 
 ### Main Loop
 ```cpp
