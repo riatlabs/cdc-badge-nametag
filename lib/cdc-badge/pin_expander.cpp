@@ -76,10 +76,10 @@ char pin_expander_process_irq() {
       returnedchar = '9';
       break;
     case 0b011111111111:
-      returnedchar = 'Y';
+      returnedchar = 'N';
       break;
     case 0b101111111111:
-      returnedchar = 'N';
+      returnedchar = 'Y';
       break;
     default:
       returnedchar = 'x';
