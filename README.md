@@ -1,146 +1,207 @@
-# CDC Badge Firmware
+# CDC Badge Firmware Update Package
 
-This repository contins a minimalistic firmware for the CDC badge with e-paper display, keyboard and the TROPIC01 secure element.
-Hw design of this badge is [here](https://www.github.com/riatlabs/cdc-badge), check `releases` for direct access to pdf schematics.
-Read more about Critical Decentralisation Cluster [here](https://decentral.community/).
+## What's Included
 
----
+This package contains all modified files for the CDC badge firmware with:
+- ✅ 4-page telemetry display with headers (POWER, SYSTEM, OVERVIEW, C3NAV)
+- ✅ Grid layout (no text overflow)
+- ✅ Button 3/6 navigation
+- ✅ Auto-rotating pages (10s interval)
+- ✅ Fixed TROPIC01 key generation
+- ✅ WiFi connectivity
+- ✅ c3nav indoor positioning
 
-## Table of Contents
+## Quick Install
 
-- [Quick Start](#quick-start)
-- [How to Personalize Your Badge](#how-to-personalize-your-badge)
-- [Power Management](#power-management)
-- [Hardware Architecture](#hardware-architecture)
-- [Software Architecture](#software-architecture)
-- [Dependencies](#dependencies)
-- [FAQ](#faq)
+```bash
+# 1. Unzip in your project root
+cd cdc-badge-nametag
+unzip cdc-badge-firmware-update.zip
 
----
+# 2. Copy files to your project
+cp -r cdc-badge-update/src/* src/
+cp -r cdc-badge-update/lib/cdc-badge/* lib/cdc-badge/
 
-## Quick Start
+# 3. Update platformio.ini
+# Add this line to lib_deps:
+#   bblanchon/ArduinoJson@^7.2.1
 
-### Prerequisites
+# 4. Build and flash
+pio run -t upload
+```
 
-You need a code editor, and [PlatformIO](https://platformio.org/).
+## Files Changed
 
-#### VS Codium way (VS Code sans the MS telemetry)
+### src/ (3 files)
+- `app.h` - Added page navigation, WiFi tracking
+- `app.cpp` - 4-page rotation, button 3/6 support
+- `main.cpp` - No changes from working version
 
-1. [VS Codiuum](https://vscodium.com/)
-2. Install the [PlatformIO extension](https://platformio.org/install/ide?install=vscode)
-3. Restart VS Codium
+### lib/cdc-badge/ (8 files)
+- `display_ui.h` - 4-page telemetry declarations
+- `display_ui.cpp` - Headers, grid layout, c3nav page
+- `telemetry.h` - Added c3nav location fields
+- `telemetry.cpp` - Battery/system telemetry
+- `tropic_demo.h` - Crypto demo interface
+- `tropic_demo.cpp` - Ed25519 sign/verify
+- `wifi_config.h` - NEW: WiFi and c3nav API
+- `wifi_config.cpp` - NEW: WiFi/HTTP implementation
 
-### Build and Flash
+## Documentation
 
-1. Clone this repository
-2. Open the project folder in VS Code
-3. Click the PlatformIO icon in the left sidebar
-4. Select your build environment and click "Upload"
+- **INSTALL.md** - Quick installation steps
+- **BUTTON_MANUAL.md** - Button reference card
+- **V2_IMPROVEMENTS.md** - Display improvements explained
+- **WIFI_C3NAV_GUIDE.md** - Complete WiFi/c3nav guide
+- **platformio_additions.ini** - PlatformIO changes needed
 
----
+## What Changed
 
-## How to Personalize Your Badge
+### Display
+- Added page headers (POWER, SYSTEM, OVERVIEW, C3NAV)
+- Page indicators (1/4, 2/4, 3/4, 4/4)
+- Grid layout with better spacing
+- 4th page for c3nav positioning
 
-To customize the display with your information:
+### Navigation
+- Button 3: Next page
+- Button 6: Previous page
+- Auto-rotation every 10 seconds
 
-1. Open [`lib/cdc-badge/display.h`](lib/cdc-badge/display.h)
-2. Modify the following macros:
+### WiFi (Optional)
+- Auto-connects to 39C3-Open
+- Scans WiFi for c3nav positioning
+- Displays coordinates on page 4/4
+- Configurable in wifi_config.cpp
 
+### TROPIC01
+- Fixed key generation (erases before generating)
+- Works reliably every time
+
+## Button Map
+
+```
+0 → Nametag
+1 → Telemetry (4 pages, auto-rotating)
+2 → TROPIC01 Demo
+3 → Next page
+6 → Previous page
+Y → Toggle nametag/telemetry (or demo action)
+N → Verify signature
+```
+
+## Configuration
+
+### WiFi Network
+Edit `lib/cdc-badge/wifi_config.cpp`:
 ```cpp
-#define DISPLAY_LINE_1 "Your name"
-#define DISPLAY_LINE_2 "your project"
-#define DISPLAY_LINE_3 "your web"
+wifi_config_t default_wifi_config = {
+    .ssid = "39C3-Open",        // Change SSID here
+    .password = "",              // Add password if needed
+    .auto_connect = true         // Set false to disable
+};
 ```
 
-3. Rebuild and flash the firmware
-
----
-
-## Power Management
-
-### Power Controls
-
-- **Power ON**: Press and hold **SW12** for ~3 seconds
-- **Power OFF**: Press the **FLASH button** (GPIO0)
-
----
-
-## Hardware Architecture
-
-### Component Overview
-
-| Component          | Interface | Address/Pin | Description               |
-|--------------------|-----------|-------------|---------------------------|
-| BQ25895            | I2C0      | 0x6A        | Battery charging IC       |
-| TCA9535 Expander   | I2C1      | 0x20        | Keyboard matrix I/O       |
-| GxEPD2 Display     | SPI       | CS=41       | E-paper display           |
-| TROPIC01           | SPI       | CS=10       | Secure element            |
-| LED                | GPIO      | 8           | Status indicator          |
-
-### Pin Configuration
-
-```
-I2C Buses:
-  I2C0: SDA=17, SCL=18  → Power Management (BQ25895)
-  I2C1: SDA=47, SCL=48  → Pin Expander (TCA9535)
-
-SPI Bus:
-  SCLK=12, MISO=11, MOSI=13
-
-E-Paper Display:
-  CS=41, DC=45, RST=46, BUSY=42, LED=8
-
-TROPIC01 Secure Element:
-  CS=10
-
-Buttons & Interrupts:
-  EXP_IRQ=1    → Pin expander interrupt
-  FLASH=0      → Power button / Boot mode
-```
-
----
-
-## Software Architecture
-
-### Main Loop Flow
-
+### c3nav API
 ```cpp
-setup() → badge_init() → app_setup()
-   ↓
-loop() → app_loop() → read keyboard input
+c3nav_config_t default_c3nav_config = {
+    .api_url = "https://39c3.c3nav.de/api/positioning/locate/",
+    .enabled = true,             // Set false to disable
+    .scan_interval_ms = 30000    // 30 seconds between scans
+};
 ```
-
-### Initialization Sequence
-
-1. **Serial Port** → Debug output (115200 baud)
-2. **I2C Buses** → Initialize I2C0 (charging) and I2C1 (expander)
-3. **Power Management** → Configure BQ25895 battery charger
-4. **SPI Bus** → Initialize communication for display and secure element
-5. **Pin Expander** → Setup TCA9535 for keyboard matrix scanning
-6. **TROPIC01** → Initialize secure element and establish session
-7. **Display** → Configure e-paper with white text on black background
-
----
 
 ## Dependencies
 
-This project uses the following libraries:
+Add to `platformio.ini`:
+```ini
+lib_deps = 
+    https://github.com/tropicsquare/libtropic-arduino.git
+    robtillaart/TCA9555@^0.4.3
+    zinggjm/GxEPD2 @ ^1.6.5
+    adafruit/Adafruit GFX Library @ ^1.12.4
+    bblanchon/ArduinoJson@^7.2.1  # <-- ADD THIS LINE
+```
 
-- **[libtropic-arduino](https://github.com/tropicsquare/libtropic-arduino)** - TROPIC01 secure element SDK
-- **[TCA9555](https://github.com/robtillaart/TCA9555)** - I²C I/O expander driver for keyboard
-- **[GxEPD2](https://github.com/ZinggJM/GxEPD2)** - E-paper display driver
-- **[Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)** - Graphics rendering library
+## Telemetry Pages
 
-All dependencies are automatically managed by PlatformIO.
+### Page 1: POWER (1/4)
+```
+POWER                       1/4
+────────────────────────────────
+[🔋] 4.12V          85%
+Fast                450mA
+[USB] USB           3.85V
+```
 
----
+### Page 2: SYSTEM (2/4)
+```
+SYSTEM                      2/4
+────────────────────────────────
+[🌡] 38.5C          [💾] 142K
+[🕐] 02:34:15
+[🔒] Active
+```
 
-## FAQ
+### Page 3: OVERVIEW (3/4)
+```
+OVERVIEW                    3/4
+────────────────────────────────
+[🔋] 4.12V 85%
+[🌡] 38.5C          [💾] 142K
+[🕐] 02:34:15
+[USB] USB           [🔒] SE:OK
+SYS:3.85V           450mA
+```
 
-For frequently asked questions and troubleshooting, see the [FAQ document](./FAQ.md).
+### Page 4: C3NAV (4/4)
+```
+C3NAV                       4/4
+────────────────────────────────
+WiFi: Connected
+X: 123.4m
+Y: 678.9m
+Level: 0
+Precision: 5.2m
+```
 
----
+## Troubleshooting
 
-## License
+### Display not updating
+- Check serial monitor: `pio device monitor -b 115200`
+- Should see "Display updated" message
+- Verify files copied correctly
 
-This project is part of the Critical Decentralisation Cluster initiative.
+### WiFi not connecting
+- Open network: No password needed
+- Check SSID is exactly "39C3-Open" (case-sensitive)
+- See WIFI_C3NAV_GUIDE.md for details
+
+### c3nav shows "Unknown"
+- WiFi must be connected first
+- Needs 3+ access points in range
+- Scan interval is 30 seconds
+- Check API URL matches event
+
+### TROPIC01 key gen fails
+- This is fixed in this update
+- Explicitly erases key before generating
+- Should work reliably now
+
+## Support
+
+Read the detailed guides:
+1. **INSTALL.md** - Installation steps
+2. **V2_IMPROVEMENTS.md** - What changed and why
+3. **WIFI_C3NAV_GUIDE.md** - WiFi troubleshooting and config
+4. **BUTTON_MANUAL.md** - Quick button reference
+
+## Version
+
+CDC Badge Firmware Update - December 2025
+- Telemetry V2 with 4 pages
+- WiFi & c3nav integration
+- TROPIC01 fixes
+- Grid layout improvements
+
+Enjoy your upgraded CDC badge! 🎉

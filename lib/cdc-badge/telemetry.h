@@ -2,6 +2,7 @@
 #define TELEMETRY_H
 
 #include <Arduino.h>
+#include "wifi_config.h"
 
 // Charge status enumeration derived from BQ25895 REG0A bits 4-3
 typedef enum {
@@ -32,6 +33,13 @@ typedef struct {
     bool tropic01_active;
     display_mode_t display_mode;
     uint32_t last_update_millis;
+    // c3nav and WiFi status
+    c3nav_location_t c3nav_location;
+    bool wifi_connected;
+    bool flight_mode;
+    uint8_t last_wifi_scan_count;
+    char c3nav_error[64];
+    uint32_t last_c3nav_scan;
 } telemetry_data_t;
 
 // Initialize telemetry subsystem

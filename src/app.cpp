@@ -2,6 +2,7 @@
 #include "badge.h"
 #include "display_ui.h"
 #include "display.h"
+#include "wifi_config.h"
 #include <Arduino.h>
 
 // External display reference
@@ -22,6 +23,10 @@ void app_setup(app_state_t *state) {
     telemetry_init();
     tropic_demo_init(&state->tropic_demo);
     ui_init();
+    
+    // Initialize WiFi and c3nav
+    wifi_init(&default_wifi_config);
+    c3nav_init(&default_c3nav_config);
     
     // Initial telemetry reading
     telemetry_update(&state->telemetry);
@@ -104,6 +109,18 @@ void app_update_display(app_state_t *state) {
     Serial.println("Display updated");
 }
 
+void app_toggle_flight_mode(app_state_t *state) {
+    bool current = wifi_get_flight_mode();
+    wifi_set_flight_mode(!current);
+    
+    // Update telemetry state
+    state->telemetry.flight_mode = !current;
+    state->display_needs_update = true;
+    
+    Serial.print("Flight mode: ");
+    Serial.println(!current ? "ON" : "OFF");
+}
+
 void app_handle_number_button(app_state_t *state, char button) {
     if (!state) return;
     
@@ -125,6 +142,9 @@ void app_handle_number_button(app_state_t *state, char button) {
             break;
         case '6':
             app_prev_page(state);
+            break;
+        case '7':
+            app_toggle_flight_mode(state);
             break;
         default:
             break;
@@ -180,6 +200,56 @@ void app_handle_yn_button(app_state_t *state, char button) {
     }
 }
 
+void app_update_c3nav(app_state_t *state) {
+    if (!state) return;
+    
+    // Update WiFi and flight mode status
+    state->telemetry.wifi_connected = wifi_is_connected();
+    state->telemetry.flight_mode = wifi_get_flight_mode();
+    
+    uint32_t now = millis();
+    
+    // Only scan if WiFi connected and not in flight mode
+    if (!state->telemetry.wifi_connected || state->telemetry.flight_mode) {
+        return;
+    }
+    
+    // Rate limit scans to 30 seconds
+    if (now - state->telemetry.last_c3nav_scan < 30000) {
+        return;
+    }
+    
+    state->telemetry.last_c3nav_scan = now;
+    
+    // Scan WiFi networks
+    wifi_scan_result_t scan_results[20];
+    int num_scans = wifi_scan_for_c3nav(scan_results, 20);
+    state->telemetry.last_wifi_scan_count = num_scans;
+    
+    if (num_scans > 0) {
+        // Send to c3nav API
+        if (c3nav_locate(scan_results, num_scans, &state->telemetry.c3nav_location)) {
+            Serial.println("c3nav location updated");
+            state->telemetry.c3nav_error[0] = '\0';  // Clear error
+            
+            // Trigger display update if on c3nav page
+            if (state->display_mode == DISPLAY_MODE_TELEMETRY && state->telemetry_page == 3) {
+                state->display_needs_update = true;
+            }
+        } else {
+            const char* error = c3nav_get_last_error();
+            strncpy(state->telemetry.c3nav_error, error, sizeof(state->telemetry.c3nav_error) - 1);
+            state->telemetry.c3nav_error[sizeof(state->telemetry.c3nav_error) - 1] = '\0';
+            
+            Serial.print("c3nav error: ");
+            Serial.println(error);
+        }
+    } else {
+        Serial.println("No WiFi APs scanned");
+        strncpy(state->telemetry.c3nav_error, "No APs found", sizeof(state->telemetry.c3nav_error) - 1);
+    }
+}
+
 void app_loop(app_state_t *state) {
     if (!state) return;
     
@@ -194,6 +264,9 @@ void app_loop(app_state_t *state) {
             state->display_needs_update = true;
         }
     }
+    
+    // Update c3nav positioning
+    app_update_c3nav(state);
     
     // Auto-rotate pages in telemetry mode
     if (state->display_mode == DISPLAY_MODE_TELEMETRY && 
