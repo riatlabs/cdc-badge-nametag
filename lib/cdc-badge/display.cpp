@@ -7,6 +7,24 @@
 GxEPD2_BW<GxEPD2_290_T94_V2, GxEPD2_290_T94_V2::HEIGHT> display(GxEPD2_290_T94_V2(EPD_CS_PIN, EPD_DC_PIN, EPD_RST_PIN,
                                                                                   EPD_BUSY_PIN));
 
+void drawLogo(int16_t x, int16_t y, int16_t size) {
+    // Signal wave icon representing off-grid messaging
+    int16_t waveWidth = size;
+    int16_t waveHeight = size / 2;
+    
+    // Draw three signal arcs
+    for (int i = 0; i < 3; i++) {
+        int16_t radius = (i + 1) * (waveWidth / 6);
+        display.drawCircle(x, y + waveHeight / 2, radius, GxEPD_WHITE);
+        // Draw only right half by overlaying black on left
+        display.fillRect(x - radius - 1, y + waveHeight / 2 - radius, 
+                        radius + 1, radius * 2, GxEPD_BLACK);
+    }
+    
+    // Central dot
+    display.fillCircle(x, y + waveHeight / 2, 3, GxEPD_WHITE);
+}
+
 void display_init() {
 
     Serial.println("display_init()");
@@ -26,24 +44,38 @@ void display_init() {
     display.init(115200, true, 20, false, SPI_Bus, SPISettings(4000000, MSBFIRST, SPI_MODE0));
 
     display.setRotation(1);
-    display.setFont(&FreeMonoBold9pt7b);
+    display.setFont(&FreeSansBold9pt7b);
     display.setTextColor(GxEPD_WHITE);
 
     display.setFullWindow();
     display.firstPage();
+    
     do {
         display.fillScreen(GxEPD_BLACK);  // Black background
         display.setTextColor(GxEPD_WHITE);  // White text
-
-        display.setCursor(10, 30);
+        // Draw logo
+        drawLogo(20, 15, 40);
+        
+        // Title
+        display.setFont(&FreeSansBold12pt7b);
+        display.setCursor(70, 35);
+        
         display.print(DISPLAY_LINE_1);
 
-        display.setCursor(10, 60);
+
+        display.setFont(&FreeSansBold12pt7b);
+        display.setCursor(70, 55);
+        
+        display.print(DISPLAY_LINE_39C);
+        // Subtitle
+        display.setFont(&FreeSans9pt7b);
+        display.setCursor(70, 90);
         display.print(DISPLAY_LINE_2);
-
-        display.setCursor(10, 90);
+        
+        // Tagline
+        display.setCursor(20, 110);
         display.print(DISPLAY_LINE_3);
-
+        
     } while (display.nextPage());
 
     Serial.println("[SUCCESS] Screen updated");
