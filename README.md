@@ -1,6 +1,6 @@
 # CDC Badge Firmware
 
-This repository contins minimalistic firmware for CDC badge with e-paper display, keyboard and TROPIC01 secure element.
+This repository contins a minimalistic firmware for the CDC badge with e-paper display, keyboard and the TROPIC01 secure element.
 Hw design of this badge is [here](https://www.github.com/riatlabs/cdc-badge), check `releases` for direct access to pdf schematics.
 Read more about Critical Decentralisation Cluster [here](https://decentral.community/).
 
@@ -22,9 +22,13 @@ Read more about Critical Decentralisation Cluster [here](https://decentral.commu
 
 ### Prerequisites
 
-1. Install [Visual Studio Code](https://code.visualstudio.com/)
+You need a code editor, and [PlatformIO](https://platformio.org/).
+
+#### VS Codium way (VS Code sans the MS telemetry)
+
+1. [VS Codiuum](https://vscodium.com/)
 2. Install the [PlatformIO extension](https://platformio.org/install/ide?install=vscode)
-3. Restart Visual Studio Code
+3. Restart VS Codium
 
 ### Build and Flash
 
