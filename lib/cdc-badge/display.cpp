@@ -17,7 +17,7 @@ void home_display() {
     do {
         display.setFont(&FreeMonoBold18pt7b);
         display.fillScreen(GxEPD_WHITE);
-        display.setCursor(5, 20);
+        display.setCursor(5, 23);
         display.print(DISPLAY_LINE_1);
 
         display.setFont(&FreeMonoBold12pt7b);

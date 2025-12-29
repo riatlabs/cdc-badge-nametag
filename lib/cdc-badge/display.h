@@ -12,12 +12,12 @@
 #define OSDBOX_H 60
 #define DISPLAY_BACKGROUND_LIGHT_LEVEL 5 // 0-1023
 
-#define DISPLAY_LINE_1 "Line1"
-#define DISPLAY_LINE_1A "Line1A"
-#define DISPLAY_LINE_2 "Line2"
-#define DISPLAY_LINE_3 "Line3"
-#define DISPLAY_LINE_4 "Line4"
-#define DISPLAY_LINE_5 "Line5"
+#define DISPLAY_LINE_1 "39C3"
+#define DISPLAY_LINE_1A "CDC Badge Nametag"
+#define DISPLAY_LINE_2 ""
+#define DISPLAY_LINE_3 "ESP32s3, E-Ink and  "
+#define DISPLAY_LINE_4 "TROPIC01 Secure Element"
+#define DISPLAY_LINE_5 ""
 
 void display_init();
 void display_show();
