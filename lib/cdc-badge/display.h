@@ -16,9 +16,9 @@ void display_init();
 void display_show();
 
 // Other functions used for test and inspiration:
-//void test_graphics_checkerboard(void);
-//void test_EPD_light(void);
-//void test_EPD_pwm(void);
-//void test_gpio_led_output(void);
+// void test_graphics_checkerboard(void);
+// void test_EPD_light(void);
+// void test_EPD_pwm(void);
+// void test_gpio_led_output(void);
 
 #endif // DISPLAY_H

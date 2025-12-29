@@ -14,12 +14,12 @@ bool i2c_bus_init() {
         Serial.println("ERROR: Failed to initialize I2C0_Bus");
         success = false;
     }
-    
+
     // Initialize I2C1 bus
     if (!I2C1_Bus.begin(I2C1_SDA_PIN, I2C1_SCL_PIN)) {
         Serial.println("ERROR: Failed to initialize I2C1_Bus");
         success = false;
     }
-    
+
     return success;
 }

@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
-#include "spi_bus.h"
 #include "badge.h"
 #include "display.h"
+#include "spi_bus.h"
 
 GxEPD2_BW<GxEPD2_290_T94_V2, GxEPD2_290_T94_V2::HEIGHT> display(GxEPD2_290_T94_V2(EPD_CS_PIN, EPD_DC_PIN, EPD_RST_PIN,
                                                                                   EPD_BUSY_PIN));
@@ -27,12 +27,12 @@ void display_init() {
 
     display.setRotation(1);
     display.setFont(&FreeMonoBold9pt7b);
-    display.setTextColor(GxEPD_WHITE);  // White text on black background
+    display.setTextColor(GxEPD_WHITE); // White text on black background
 
     // Use partial window for smooth, flicker-free updates (ideal for menus)
     // This avoids the heavy blinking of full refresh mode
     display.setPartialWindow(0, 0, display.width(), display.height());
-    
+
     display.firstPage();
     do {
         display.fillScreen(GxEPD_BLACK);

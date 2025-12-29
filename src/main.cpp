@@ -43,17 +43,15 @@
 app_state_t app_state;
 void setup() {
 
-  // Initialize all hardware resources
-  badge_init();
+    // Initialize all hardware resources
+    badge_init();
 
-  // Initialize application state
-  app_setup(&app_state);
-
+    // Initialize application state
+    app_setup(&app_state);
 }
 
 void loop() {
 
-  // Loop through the all inputs and process the aplication outputs
-  app_loop(&app_state);
-
+    // Loop through the all inputs and process the aplication outputs
+    app_loop(&app_state);
 }

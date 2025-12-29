@@ -1,14 +1,13 @@
 #ifndef BADGE_H
 #define BADGE_H
 
-#include "serial_port.h"
-#include "pin_expander.h"
-#include "tropic01.h"
-#include "power_management.h"
 #include "display.h"
+#include "pin_expander.h"
+#include "power_management.h"
+#include "serial_port.h"
+#include "tropic01.h"
 
 #define DBG_SERIAL_BAUDRATE 115200
-
 
 #define LED_PIN 0
 // I2C0 (Charging IC)
