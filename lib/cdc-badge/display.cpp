@@ -76,6 +76,8 @@ void display_show() {
 }
 
 void brightness_osd(int brightness) {
+    display.setPartialWindow(24, 34, 248, 60); // smaller area for OSD (keep background as is / overlay)
+
     display.firstPage();
     do {
         display.setFont(&FreeMonoBold9pt7b);
